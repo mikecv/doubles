@@ -5,7 +5,7 @@ description = ""
 authors = ["mikecv <galacticwingcommander@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.9.9,<3.12"
 spacy = "^3.6.1"
 
 [tool.poetry.dev-dependencies]
