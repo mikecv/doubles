@@ -1,0 +1,17 @@
+# Main application settings.
+app:
+  APP_NAME:     "doubles"
+  APP_VERSION:  "0.0.1"
+# Logging settings.
+log:
+  DEF_LEVEL:     10
+  MAX_SIZE:      250000
+  MAX_FILES:     3
+# Processing status values.
+status:
+  ST_NOQ:         "No questions to process."
+  ST_QREAD:       "Some questions read."
+  ST_ONEQ:        "Only one question to process."
+# Similarity scores.
+scores:
+  SS_MATCH:       0.7

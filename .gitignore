@@ -1,2 +1,8 @@
-# Ignore files.
+# Ignore log files.
+*.log
 
+# Ignore code workspace.
+*.code-workspace
+
+# Ignore chache folders.
+__pycache__/
