@@ -1,11 +1,11 @@
 """
-Class to hold original question store (from csv file),
+Class to hold original question store (from file),
 and results of duplication detection.
 """
 
-import csv
 import dotsi  # type: ignore
 import logging
+import openpyxl
 import os
 import spacy
 import spacy_universal_sentence_encoder
@@ -24,7 +24,7 @@ class Question:
     Question class.
     """
 
-    def __init__(self, lid: int, question_text: str, answer: str) -> None:
+    def __init__(self, lid: int, question_text: str, answer: bool) -> None:
         """
         Question initialisation.
         Args:
@@ -37,10 +37,7 @@ class Question:
 
         self.lid = lid
         self.question = question_text
-        if answer == "yes":
-            self.answer = True
-        else:
-            self.answer = False
+        self.answer = answer
 
         # Question statuses.
 
@@ -57,11 +54,11 @@ class Question_Store:
     Class for the store of questions.
     """
 
-    def __init__(self, csv_file: str, settings: dotsi.Dict) -> None:
+    def __init__(self, q_file: str, settings: dotsi.Dict) -> None:
         """
         Question_Store initialisation.
         Args:
-            csv_file:   CSV file containing questions.
+            q_file:     Question file (Excel) containing questions.
             settings:   Applications settings.
         Returns:
             Returns None.
@@ -77,18 +74,21 @@ class Question_Store:
         self.num_q = 0
         self.status = self.settings.status.ST_NOQ
 
-        # Read CSV file and add to store.
-        with open(csv_file, newline='', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                # Read the CSV file (one row per question).
-                q_id = int(row['id'])
-                q_text = row['question']
-                q_answer = row['answer'].lower()
-                self._store.append(Question(q_id, q_text, q_answer))
-                self.num_q += 1
 
-        log.info(f"Number of questions read from CSV file: {self.num_q}")
+        # Load the workbook
+        workbook = openpyxl.load_workbook(filename=q_file)
+
+        # Select the active sheet
+        sheet = workbook.active
+
+        # Iterate through rows in the worksheet and extract question details.
+        for row_num in range(2, sheet.max_row+1):
+            q_text = sheet.cell(row=row_num, column=1).value
+            q_answer = bool(sheet.cell(row=row_num, column=2).value)
+            self._store.append(Question(row_num-1, q_text, q_answer))
+            self.num_q += 1
+
+        log.info(f"Number of questions read from file: {self.num_q}")
 
     def process(self) -> None:
         """
