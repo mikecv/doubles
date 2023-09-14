@@ -14,4 +14,4 @@ status:
   ST_ONEQ:        "Only one question to process."
 # Similarity scores.
 scores:
-  SS_MATCH:       0.9
+  SS_MATCH:       0.75

@@ -46,8 +46,6 @@ class Question:
         self.unique = True
         self.duplicate = False
         self.duplicates = []
-        self.opposite = False
-
 
 class Question_Store:
     """
@@ -93,7 +91,7 @@ class Question_Store:
     def process(self) -> None:
         """
         Process questions.
-        Look for duplicates, checking for opposite context questions.
+        Look for duplicates questions.
         The rest will be unique questions.
         Args:
         Returns:
@@ -124,9 +122,9 @@ class Question_Store:
                 q.reference = True
                 log.debug(f"Ref. question, id: {q.lid}, Text: {q.question}")
 
-                # Need to find next question that isn't a duplicate or an opposite.
+                # Need to find next question that isn't a duplicate.
                 for idx2, q2 in enumerate(self._store[idx+1:]):
-                    if q2.duplicate is True or q2.opposite is True:
+                    if q2.duplicate is True:
                         continue
                     else:
                         # Have 2 questions to compare now.
@@ -138,14 +136,7 @@ class Question_Store:
                             q2.duplicate = True
                             q.duplicates.append(q2)
                             self.num_duplicates += 1
-                            # Just do a check that answers match as well.
-                            if q.answer == q2.answer:
-                                log.debug(f"DUPLICATE, id: {q2.lid}, Text: {q2.question}, similarity: {similarity :.3f}")
-                            else:
-                                # If questions considered a match and answers are opposite,
-                                # then this is likely opposite question.
-                                q2.opposite = True
-                                log.debug(f"OPPOSITE, id: {q2.lid}, Text: {q2.question}, similarity: {similarity :.3f}")
+                            log.debug(f"DUPLICATE, id: {q2.lid}, Text: {q2.question}, similarity: {similarity :.3f}")
                         else:
                             # Not a match.
                             log.debug(f"Checked question, id: {q2.lid}, Text: {q2.question}, similarity: {similarity :.3f}")
@@ -175,11 +166,8 @@ class Question_Store:
             if q.unique is True:
                 print(f"({idx+1:05d}) {q.question} ({q.lid})")
                 for op in q.duplicates:
-                    # For duplicates indicate the opposite nature if applicable.
-                    if op.opposite is False:
-                        print(f"\t[{op.lid}] {op.question} ({op.lid})")
-                    else:
-                        print(f"\t[{op.lid}] {op.question} ({op.lid}) [Opposite]")
+                    # List duplicates if applicable.
+                    print(f"\t({op.lid}) {op.question} DUPLICATE of ({q.lid})")
         print("*" * 80)
 
                         
