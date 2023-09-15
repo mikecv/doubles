@@ -11,6 +11,11 @@ import spacy
 import spacy_universal_sentence_encoder
 import time
 
+# Get spacy logger and set log level to ERROR.
+logSpacy = logging.getLogger("spacy")
+logSpacy.setLevel(logging.ERROR)
+
+# Get looger for this application
 log = logging.getLogger(__name__)
 
 # Load the spaCy model.
