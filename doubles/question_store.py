@@ -1,16 +1,17 @@
 """
-Class to hold original question store (from csv file),
+Class to hold original question store (from file),
 and results of duplication detection.
 """
 
-import csv
 import dotsi  # type: ignore
 import logging
+import openpyxl
 import os
 import spacy
+from spacy.lang.en.stop_words import STOP_WORDS
 import spacy_universal_sentence_encoder
-import time
 
+# Get looger for this application
 log = logging.getLogger(__name__)
 
 # Load the spaCy model.
@@ -24,7 +25,7 @@ class Question:
     Question class.
     """
 
-    def __init__(self, lid: int, question_text: str, answer: str) -> None:
+    def __init__(self, lid: int, question_text: str, answer: bool) -> None:
         """
         Question initialisation.
         Args:
@@ -35,33 +36,44 @@ class Question:
             Returns         None.
         """
 
+        # Id of the source question.
         self.lid = lid
-        self.question = question_text
-        if answer == "yes":
-            self.answer = True
-        else:
-            self.answer = False
 
-        # Question statuses.
+        # Raw question text.
+        self.original_question = question_text
+        # Normalise the string and convert to tokens.
+        self.tokens = self.original_question.lower().split()
+        # Check for possible negative sentiment.
+        self.neg_sentiment = True if 'not' in self.tokens else False
+        # Remove punctuation.
+        self.tokens = [token.strip('?,.!') for token in self.tokens]
+        # Remove common words that bias matching (stop words).
+        self.tokens = [token for token in self.tokens if token not in list(STOP_WORDS)]
+
+        # Reform tokens to processing string.
+        self.question = ' '.join(self.tokens)
+
+        # Expected answer, True=yes, False=no.
+        self.answer = answer
 
         # Whether or not question has been the reference question yet.
         self.reference = False
+        # Question statuses.
         self.unique = True
         self.duplicate = False
+        # List of duplicates to this question.
         self.duplicates = []
-        self.opposite = False
-
 
 class Question_Store:
     """
     Class for the store of questions.
     """
 
-    def __init__(self, csv_file: str, settings: dotsi.Dict) -> None:
+    def __init__(self, q_file: str, settings: dotsi.Dict) -> None:
         """
         Question_Store initialisation.
         Args:
-            csv_file:   CSV file containing questions.
+            q_file:     Question file (Excel) containing questions.
             settings:   Applications settings.
         Returns:
             Returns None.
@@ -77,23 +89,26 @@ class Question_Store:
         self.num_q = 0
         self.status = self.settings.status.ST_NOQ
 
-        # Read CSV file and add to store.
-        with open(csv_file, newline='', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                # Read the CSV file (one row per question).
-                q_id = int(row['id'])
-                q_text = row['question']
-                q_answer = row['answer'].lower()
-                self._store.append(Question(q_id, q_text, q_answer))
-                self.num_q += 1
 
-        log.info(f"Number of questions read from CSV file: {self.num_q}")
+        # Load the workbook
+        workbook = openpyxl.load_workbook(filename=q_file)
+
+        # Select the active sheet
+        sheet = workbook.active
+
+        # Iterate through rows in the worksheet and extract question details.
+        for row_num in range(2, sheet.max_row+1):
+            q_text = sheet.cell(row=row_num, column=1).value
+            q_answer = bool(sheet.cell(row=row_num, column=2).value)
+            self._store.append(Question(row_num-1, q_text, q_answer))
+            self.num_q += 1
+
+        log.info(f"Number of questions read from file: {self.num_q}")
 
     def process(self) -> None:
         """
         Process questions.
-        Look for duplicates, checking for opposite context questions.
+        Look for duplicates questions.
         The rest will be unique questions.
         Args:
         Returns:
@@ -104,6 +119,7 @@ class Question_Store:
 
         # Number of duplicate questions detected, and duplicates with errors.
         self.num_duplicates = 0
+        self.num_negatives = 0
 
         # If only one question, nothing to test as questions unique.
         if self.num_q == 1:
@@ -122,11 +138,11 @@ class Question_Store:
             else:
                 # Mark this question as being a reference question.
                 q.reference = True
-                log.debug(f"Ref. question, id: {q.lid}, Text: {q.question}")
+                log.debug(f"Ref. question, id: {q.lid}, Text: {q.original_question}, Tokens: {q.question}")
 
-                # Need to find next question that isn't a duplicate or an opposite.
+                # Need to find next question that isn't a duplicate.
                 for idx2, q2 in enumerate(self._store[idx+1:]):
-                    if q2.duplicate is True or q2.opposite is True:
+                    if q2.duplicate is True:
                         continue
                     else:
                         # Have 2 questions to compare now.
@@ -138,17 +154,18 @@ class Question_Store:
                             q2.duplicate = True
                             q.duplicates.append(q2)
                             self.num_duplicates += 1
-                            # Just do a check that answers match as well.
-                            if q.answer == q2.answer:
-                                log.debug(f"DUPLICATE, id: {q2.lid}, Text: {q2.question}, similarity: {similarity :.3f}")
+                            if q2.neg_sentiment is False:
+                                log.debug(f"DUPLICATE, id: {q2.lid}, Text: {q2.original_question}, Tokens: {q2.question}, similarity: {similarity :.3f}")
                             else:
-                                # If questions considered a match and answers are opposite,
-                                # then this is likely opposite question.
-                                q2.opposite = True
-                                log.debug(f"OPPOSITE, id: {q2.lid}, Text: {q2.question}, similarity: {similarity :.3f}")
+                                log.debug(f"NEGATIVE SENTIMENT, id: {q2.lid}, Text: {q2.original_question}, Tokens: {q2.question}, similarity: {similarity :.3f}")
+                                self.num_negatives += 1
+                                # Check to make sure that the two questions have opposite answers,
+                                # else negative sentiment might be wrong.
+                                if q.answer == q2.answer:
+                                    log.warning("Possible error in negative sentiment as answers not opposite.")
                         else:
                             # Not a match.
-                            log.debug(f"Checked question, id: {q2.lid}, Text: {q2.question}, similarity: {similarity :.3f}")
+                            log.debug(f"Checked question, id: {q2.lid}, Text: {q2.original_question}, Tokens: {q2.question}, similarity: {similarity :.3f}")
 
     def results(self) -> None:
         """
@@ -163,9 +180,10 @@ class Question_Store:
         # Report on level of duplication detection.
         print("\n")
         print("*" * 80)
-        print(f"Questions in orginal file      : {self.num_q}")
-        print(f"Duplicate questions found      : {self.num_duplicates}")
-        print(f"Duplicate questions (%)        : {self.num_duplicates / self.num_q * 100 :.1f}")
+        print(f"Questions in orginal file           : {self.num_q}")
+        print(f"Duplicate questions found           : {self.num_duplicates}")
+        print(f"Negative sentiment questions found  : {self.num_negatives}")
+        print(f"Duplicate questions (%)             : {self.num_duplicates / self.num_q * 100 :.1f}")
         print("*" * 80)
 
         # Go through Questions and create unique set.
@@ -173,13 +191,13 @@ class Question_Store:
         print("*" * 80)
         for idx, q in enumerate(self._store[0:]):
             if q.unique is True:
-                print(f"({idx+1:05d}) {q.question} ({q.lid})")
+                print(f"({idx+1:05d}) {q.original_question} ({q.lid})")
                 for op in q.duplicates:
-                    # For duplicates indicate the opposite nature if applicable.
-                    if op.opposite is False:
-                        print(f"\t[{op.lid}] {op.question} ({op.lid})")
+                    # List duplicates if applicable.
+                    if op.neg_sentiment is False:
+                        print(f"\t({op.lid}) {op.original_question} DUPLICATE of ({q.lid})")
                     else:
-                        print(f"\t[{op.lid}] {op.question} ({op.lid}) [Opposite]")
+                        print(f"\t({op.lid}) {op.original_question} DUPLICATE of ({q.lid}) [NEGATIVE]")
         print("*" * 80)
 
                         
