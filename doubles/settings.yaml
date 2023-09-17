@@ -4,14 +4,18 @@ app:
   APP_VERSION:  "0.0.1"
 # Logging settings.
 log:
-  DEF_LEVEL:     10
-  MAX_SIZE:      300000
-  MAX_FILES:     3
+  DEF_LEVEL:     20
+  MAX_SIZE:      500000
+  MAX_FILES:     5
 # Processing status values.
 status:
-  ST_NOQ:         "No questions to process."
-  ST_QREAD:       "Some questions read."
-  ST_ONEQ:        "Only one question to process."
+  ST_NOQ:        "No questions to process."
+  ST_QREAD:      "Some questions read."
+  ST_ONEQ:       "Only one question to process."
 # Similarity scores.
 scores:
-  SS_MATCH:       0.75
+  SS_MATCH:      0.85
+# Progress bar settings.
+progress:
+  PROG_WIDTH:    80
+  
