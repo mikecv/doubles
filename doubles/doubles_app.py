@@ -20,9 +20,17 @@ class Doubles:
     Main class the question analyser application.
     """
 
-    def __init__(self, q_file):
+    def __init__(self, ifile, ofile, dry, progress, verbose):
         """
         Doubles initialisation.
+        Args:
+            ifile:          Input file of questions.
+            ofile:          Output file for unique questions.
+            dry:            Dry run, no export file created.
+            progress:       Show progress bar during analysis.
+            verbose:        Show question comparasion results inline.
+        Returns:
+            Returns None.
         """
 
         # Load application settings.
@@ -38,27 +46,36 @@ class Doubles:
         log.info(f"Initialising application: {self._app_name}, version: {self._app_version}")
 
         # Optional include file.
-        if q_file is None:
+        if ifile is None:
             log.warning("No questions file specified.")
         else:
-            log.info(f"Question file to process: {q_file}.")
+            log.info(f"Question file to process: {ifile}")
 
             # Read the questions into the questions store
-            self.questions = Question_Store(q_file, self._settings)
+            self.questions = Question_Store(ifile, self._settings)
             if self.questions.num_q == 0:
                 log.warning("No questions in question file, exiting...")
                 exit(0)
 
             # Process the questions.
-            self.questions.process()
+            self.questions.process(progress)
 
             # Report on the results.
-            self.questions.results()
+            if verbose is True:
+                self.questions.results()
 
+            # Export the results.
+            if dry is not True:
+                log.info(f"File for results export: {ofile}")
+                self.questions.export(ofile)
 
 @click.command()
-@click.option("-q", "--q-file", type=click.Path(exists=False), help="Path to the .xlsx file")
-def run(q_file) -> None:
+@click.option("-i", "--ifile", type=click.Path(exists=False), help="Path to the input .xlsx file.")
+@click.option("-o", "--ofile", type=click.Path(exists=False), help="Path to the output .xlsx file.")
+@click.option("-d", "--dry", is_flag=True, help="Perform dry run, i.e. no export file created.")
+@click.option("-p", "--progress", is_flag=True, help="Show a progress bar.")
+@click.option("-v", "--verbose", is_flag=True, help="Show question comparison and results summary.")
+def run(ifile, ofile, dry, progress, verbose) -> None:
     """
     Poetry calls this to get the application up and running.
     Assumes a python script in project.toml as follows:
@@ -69,7 +86,7 @@ def run(q_file) -> None:
     Can then run as: poetry run doubles-go
     """
 
-    Doubles(q_file)
+    Doubles(ifile, ofile, dry, progress, verbose)
 
 
 if __name__ == "__main__":
