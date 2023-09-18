@@ -20,7 +20,7 @@ class Doubles:
     Main class the question analyser application.
     """
 
-    def __init__(self, ifile, ofile, dry, progress, verbose):
+    def __init__(self, ifile, ofile, dry, progress):
         """
         Doubles initialisation.
         Args:
@@ -60,9 +60,8 @@ class Doubles:
             # Process the questions.
             self.questions.process(progress)
 
-            # Report on the results.
-            if verbose is True:
-                self.questions.results()
+            # Report statistics for the analysis.
+            self.questions.results()
 
             # Export the results.
             if dry is not True:
@@ -74,8 +73,7 @@ class Doubles:
 @click.option("-o", "--ofile", type=click.Path(exists=False), help="Path to the output .xlsx file.")
 @click.option("-d", "--dry", is_flag=True, help="Perform dry run, i.e. no export file created.")
 @click.option("-p", "--progress", is_flag=True, help="Show a progress bar.")
-@click.option("-v", "--verbose", is_flag=True, help="Show question comparison and results summary.")
-def run(ifile, ofile, dry, progress, verbose) -> None:
+def run(ifile, ofile, dry, progress) -> None:
     """
     Poetry calls this to get the application up and running.
     Assumes a python script in project.toml as follows:
@@ -86,7 +84,7 @@ def run(ifile, ofile, dry, progress, verbose) -> None:
     Can then run as: poetry run doubles-go
     """
 
-    Doubles(ifile, ofile, dry, progress, verbose)
+    Doubles(ifile, ofile, dry, progress)
 
 
 if __name__ == "__main__":
