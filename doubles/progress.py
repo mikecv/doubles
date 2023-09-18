@@ -31,7 +31,15 @@ class CLI_PROGRESS:
         # Print a new line to separate the progress bar from previous text.
         print()
 
-    def show_progress(self, prog: int):
+    def show_progress(self, prog: int, ref: int):
+        """
+        Show the progress bar.
+        The progress bar is relative to total of reference questions.
+        Args:
+            settings:   Application settings.
+            action:     Action in progress (string)
+            ref:        The id of the reference question.
+        """
 
         # Calculate length of progress done and to do.
         left = self.settings.progress.PROG_WIDTH * prog // 100
@@ -48,7 +56,7 @@ class CLI_PROGRESS:
         # Also, don't do new line at the end.
         # Show progress and remaining in different colours.
         print(
-            f"\r{self.action} : [\033[1;32m{progess}\033[0;31m{remainging}] \033[0;37m{prog:3d} %",
+            f"\r{self.action} : [\033[1;32m{progess}{remainging}\033[0;37m] [{prog:3d} %][Ref: {ref:5d}]",
             sep="",
             end="",
             flush=True,
