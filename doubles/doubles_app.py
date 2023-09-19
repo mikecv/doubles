@@ -28,7 +28,6 @@ class Doubles:
             ofile:          Output file for unique questions.
             dry:            Dry run, no export file created.
             progress:       Show progress bar during analysis.
-            verbose:        Show question comparasion results inline.
         Returns:
             Returns None.
         """

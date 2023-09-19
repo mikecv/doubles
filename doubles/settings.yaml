@@ -5,7 +5,7 @@ app:
 # Logging settings.
 log:
   DEF_LEVEL:     20
-  MAX_SIZE:      500000
+  MAX_SIZE:      1000000
   MAX_FILES:     5
 # Processing status values.
 status:
