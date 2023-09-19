@@ -3,15 +3,17 @@ Class to hold original question store (from file),
 and results of duplication detection.
 """
 
-import dotsi  # type: ignore
 import logging
-import openpyxl
 import os
-import doubles.progress as prog
+
+import dotsi  # type: ignore
+import openpyxl
 import spacy
 from spacy.lang.en.stop_words import STOP_WORDS
 from spacy.language import Language
 import spacy_universal_sentence_encoder
+
+import doubles.progress as prog
 
 # Get looger for this application
 log = logging.getLogger(__name__)
@@ -20,7 +22,7 @@ log = logging.getLogger(__name__)
 # Had to download separately, and doing via pyproject.toml file didn't seem to work.
 # poetry run python -m spacy download en_core_web_md
 # Didn't need to do this for the universal sentence encoder.
-nlp = spacy_universal_sentence_encoder.load_model('en_use_lg')
+nlp = spacy_universal_sentence_encoder.load_model("en_use_lg")
 
 
 class Question:
@@ -47,12 +49,11 @@ class Question:
         # Normalise the string and convert to tokens.
         self.tokens = self.original_question.lower().split()
         # Remove punctuation.
-        self.tokens = [token.strip('?,.!') for token in self.tokens]
+        self.tokens = [token.strip("?,.!") for token in self.tokens]
         # Remove common words that bias matching (stop words).
         self.tokens = [token for token in self.tokens if token not in list(STOP_WORDS)]
-
         # Reform tokens to processing string.
-        self.question = ' '.join(self.tokens)
+        self.question = " ".join(self.tokens)
 
         # Expected answer, True=yes, False=no.
         self.answer = answer
@@ -66,6 +67,7 @@ class Question:
         self.duplicates = []
         # The question this is a duplicate of (only the first).
         self.duplicate_of = 0
+
 
 class Question_Store:
     """
@@ -99,10 +101,11 @@ class Question_Store:
         sheet = workbook.active
 
         # Iterate through rows in the worksheet and extract question details.
-        for row_num in range(2, sheet.max_row+1):
+        for row_num in range(2, sheet.max_row + 1):
             q_text = sheet.cell(row=row_num, column=1).value
             q_answer = bool(sheet.cell(row=row_num, column=2).value)
-            self.store.append(Question(row_num-1, q_text, q_answer))
+
+            self.store.append(Question(row_num - 1, q_text, q_answer))
             self.num_q += 1
 
         log.info(f"Number of questions read from file: {self.num_q}")
@@ -138,9 +141,8 @@ class Question_Store:
         pps = 100 / self.num_q
 
         for idx, q in enumerate(self.store[0:]):
-
             if progress is True:
-                pb.show_progress(int((idx+1) * pps), q.lid)
+                pb.show_progress(int((idx + 1) * pps), q.lid)
 
             # Need to find the first reference question.
             # That is question that hasn't been compared against yet,
@@ -153,10 +155,10 @@ class Question_Store:
                 log.debug(f"Ref. question, id: {q.lid}, Text: {q.original_question}, Tokens: {q.question}")
 
                 # Need to find next question that isn't a duplicate.
-                for idx2, q2 in enumerate(self.store[idx+1:]):
+                for idx2, q2 in enumerate(self.store[idx + 1 :]):
                     if q2.duplicate is True:
                         if progress is True:
-                            pb.show_progress(int((idx+1) * pps), q.lid)
+                            pb.show_progress(int((idx + 1) * pps), q.lid)
                         continue
                     else:
                         # Have 2 questions to compare now.
@@ -169,10 +171,14 @@ class Question_Store:
                             q.duplicates.append(q2)
                             self.num_duplicates += 1
                             q2.duplicate_of = q.lid
-                            log.debug(f"DUPLICATE, id: {q2.lid}, Text: {q2.original_question}, Tokens: {q2.question}, similarity: {similarity :.3f}")
+                            log.debug(
+                                f"DUPLICATE, id: {q2.lid}, Text: {q2.original_question}, Tokens: {q2.question}, similarity: {similarity :.3f}"
+                            )
                         else:
                             # Not a match.
-                            log.debug(f"Checked question, id: {q2.lid}, Text: {q2.original_question}, Tokens: {q2.question}, similarity: {similarity :.3f}")
+                            log.debug(
+                                f"Checked question, id: {q2.lid}, Text: {q2.original_question}, Tokens: {q2.question}, similarity: {similarity :.3f}"
+                            )
 
     def results(self) -> None:
         """
@@ -192,7 +198,6 @@ class Question_Store:
         print(f"Duplicate questions (%)             : {self.num_duplicates / self.num_q * 100 :.1f} %")
         print("*" * 80)
 
-
     def export(self, ofile) -> None:
         """
         Export results of processing to out file.
@@ -210,9 +215,9 @@ class Question_Store:
         sheet1.title = "Unique_Questions"
 
         # Write title row.
-        sheet1['A1'].value = "Id"
-        sheet1['B1'].value = "Question"
-        sheet1['C1'].value = "Answer"
+        sheet1["A1"].value = "Id"
+        sheet1["B1"].value = "Question"
+        sheet1["C1"].value = "Answer"
 
         # Export questions with duplicates removed.
         ex_row = 2
@@ -220,7 +225,7 @@ class Question_Store:
             if q.duplicate is False:
                 sheet1.cell(row=ex_row, column=1).value = q.lid
                 sheet1.cell(row=ex_row, column=2).value = q.original_question
-                sheet1.cell(row=ex_row, column=3).value = 'Yes' if q.answer == 1 else 'No'
+                sheet1.cell(row=ex_row, column=3).value = "Yes" if q.answer == 1 else "No"
                 ex_row += 1
 
         # Export duplicates to a separate sheet.
@@ -228,10 +233,10 @@ class Question_Store:
         sheet2 = work_book["Duplicates"]
 
         # Write title row.
-        sheet2['A1'].value = "Id"
-        sheet2['B1'].value = "Question"
-        sheet2['C1'].value = "Answer"
-        sheet2['D1'].value = "Duplicate of"
+        sheet2["A1"].value = "Id"
+        sheet2["B1"].value = "Question"
+        sheet2["C1"].value = "Answer"
+        sheet2["D1"].value = "Duplicate of"
 
         # Export duplicate questions.
         ex_row = 2
@@ -239,17 +244,17 @@ class Question_Store:
             if q.duplicate is True:
                 sheet2.cell(row=ex_row, column=1).value = q.lid
                 sheet2.cell(row=ex_row, column=2).value = q.original_question
-                sheet2.cell(row=ex_row, column=3).value = 'Yes' if q.answer == 1 else 'No'
+                sheet2.cell(row=ex_row, column=3).value = "Yes" if q.answer == 1 else "No"
                 sheet2.cell(row=ex_row, column=4).value = q.duplicate_of
                 ex_row += 1
 
         # Save the workbook.
         work_book.save(ofile)
 
-                        
+
 def get_similarity(q1: str, q2: str) -> float:
     """
-    Function to use ChatGPT to compare 2 questions for similarity.
+    Function to use natural language processor to compare 2 questions for similarity.
         Args:
             q1:         Reference question.
             q2:         Question to compare against reference.

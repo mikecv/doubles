@@ -2,8 +2,9 @@
 Command line progress bar class.
 """
 
-import dotsi  # type: ignore
 import logging
+
+import dotsi  # type: ignore
 
 log = logging.getLogger(__name__)
 
@@ -62,5 +63,5 @@ class CLI_PROGRESS:
             flush=True,
         )
         # Flush line if complete.
-        if (prog == 100):
+        if prog == 100:
             print()
