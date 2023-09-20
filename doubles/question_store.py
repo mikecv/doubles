@@ -5,6 +5,7 @@ and results of duplication detection.
 
 import logging
 import os
+from typing import List
 
 import dotsi  # type: ignore
 import openpyxl
@@ -64,7 +65,7 @@ class Question:
         self.unique = True
         self.duplicate = False
         # List of duplicates to this question.
-        self.duplicates = []
+        self.duplicates: List[Question] = []
         # The question this is a duplicate of (only the first).
         self.duplicate_of = 0
 
