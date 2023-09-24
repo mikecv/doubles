@@ -5,6 +5,7 @@ Doubles logging.
 import logging
 import logging.config
 import logging.handlers
+import sys
 import time
 
 import dotsi  # type: ignore
@@ -27,10 +28,14 @@ def setup_logging(name: str) -> None:
     log = logging.getLogger(name)
     # Use default logging level from settings.
     log.setLevel(settings.log.DEF_LEVEL)
+    # Stop propogation of logging to console.
+    log.propagate = False
+
     # Setup log handler for rotating files.
     handler = logging.handlers.RotatingFileHandler(
         name + ".log", maxBytes=settings.log.MAX_SIZE, backupCount=settings.log.MAX_FILES
     )
+
     # Assign formatter to the log handler.
     handler.setFormatter(
         logging.Formatter(
@@ -40,5 +45,6 @@ def setup_logging(name: str) -> None:
         )
     )
     logging.Formatter.converter = time.localtime
+
     # Add log handler to logger.
     log.addHandler(handler)

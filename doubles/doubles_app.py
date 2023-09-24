@@ -2,12 +2,12 @@
 Text analysis to find duplicate questions.
 """
 
-import click
+from collections import defaultdict
 import logging
 
+import click
 import dotsi  # type: ignore
 
-from collections import defaultdict
 from doubles import app_settings
 from doubles.app_logging import setup_logging
 from doubles.question_store import Question_Store
@@ -28,7 +28,6 @@ class Doubles:
             ofile:          Output file for unique questions.
             dry:            Dry run, no export file created.
             progress:       Show progress bar during analysis.
-            verbose:        Show question comparasion results inline.
         Returns:
             Returns None.
         """
@@ -67,6 +66,7 @@ class Doubles:
             if dry is not True:
                 log.info(f"File for results export: {ofile}")
                 self.questions.export(ofile)
+
 
 @click.command()
 @click.option("-i", "--ifile", type=click.Path(exists=False), help="Path to the input .xlsx file.")

@@ -18,8 +18,9 @@ click = "^8.1.7"
 dotsi = "^0.0.3"
 PyYAML = "^6.0.1"
 spacy-universal-sentence-encoder = "^0.4.6"
-protobuf = "<=3.20.x"
+protobuf = "<=3.20"
 openpyxl = "^3.1.2"
+poethepoet = "^0.22.1"
 
 [tool.poe.tasks]
 isort = "isort --profile google --sl -l 120 --check-only --diff doubles"
