@@ -20,9 +20,6 @@ import doubles.progress as prog
 log = logging.getLogger(__name__)
 
 # Load the spaCy model.
-# Had to download separately, and doing via pyproject.toml file didn't seem to work.
-# poetry run python -m spacy download en_core_web_md
-# Didn't need to do this for the universal sentence encoder.
 nlp = spacy_universal_sentence_encoder.load_model("en_use_lg")
 
 
@@ -153,7 +150,7 @@ class Question_Store:
             else:
                 # Mark this question as being a reference question.
                 q.reference = True
-                log.debug(f"Ref. question, id: {q.lid}, Text: {q.original_question}, Tokens: {q.question}")
+                log.debug(f"Ref: {q.lid}, Text: {q.original_question}")
 
                 # Need to find next question that isn't a duplicate.
                 for idx2, q2 in enumerate(self.store[idx + 1 :]):
@@ -173,12 +170,12 @@ class Question_Store:
                             self.num_duplicates += 1
                             q2.duplicate_of = q.lid
                             log.debug(
-                                f"DUPLICATE, id: {q2.lid}, Text: {q2.original_question}, Tokens: {q2.question}, similarity: {similarity :.3f}"
+                                f"DUPLICATE: {q2.lid}, {q2.original_question}, sim: {similarity :.3f}"
                             )
                         else:
                             # Not a match.
                             log.debug(
-                                f"Checked question, id: {q2.lid}, Text: {q2.original_question}, Tokens: {q2.question}, similarity: {similarity :.3f}"
+                                f"Chk: {q2.lid}, {q2.original_question}, sim: {similarity :.3f}"
                             )
 
     def results(self) -> None:
